@@ -1,0 +1,41 @@
+# NeuWrk production Blueprint for Render.
+#
+# Same layout as Instatic's official SQLite template
+# (docs/deployment/render/sqlite/render.yaml), but it builds the image from
+# this fork's `local/neuwrk` branch instead of pulling
+# ghcr.io/corebunch/instatic:latest. The branch carries two fixes not yet in
+# an upstream release:
+#   - CoreBunch/Instatic#661 (imported videos upload)
+#   - CoreBunch/Instatic#662 (custom media fields on entry routes)
+# Once both are released upstream, switch back to the official image template.
+services:
+  - type: web
+    name: neuwrk-instatic
+    runtime: docker
+    repo: https://github.com/rodrigoc-neu-Lab/Instatic
+    branch: local/neuwrk
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: oregon
+    plan: starter # persistent disks need a paid instance
+    numInstances: 1
+    healthCheckPath: /health
+    autoDeployTrigger: off # deploy manually after reviewing a branch update
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: DATABASE_URL
+        value: sqlite:/app/storage/data/cms.db
+      - key: UPLOADS_DIR
+        value: /app/storage/uploads
+      - key: STATIC_DIR
+        value: /app/dist
+      # Render injects RENDER_EXTERNAL_URL, which Instatic uses as its public
+      # origin. When neuwrk.com points here, set PUBLIC_ORIGIN to
+      # "https://<service>.onrender.com,https://neuwrk.com,https://www.neuwrk.com".
+      - key: INSTATIC_SECRET_KEY
+        generateValue: true # copy it into your password manager after the first deploy
+    disk:
+      name: storage
+      mountPath: /app/storage
+      sizeGB: 10

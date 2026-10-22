@@ -38,4 +38,4 @@ services:
     disk:
       name: storage
       mountPath: /app/storage
-      sizeGB: 10
+      sizeGB: 2 # ~400 MB used today; grow it in the Render dashboard when needed
